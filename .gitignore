@@ -128,3 +128,13 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# deno
+/target/
+/bin/
+/coverage/
+/docs/
+/lib/
+
+# vscode
+.vscode/
