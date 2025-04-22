@@ -1,6 +1,3 @@
 {
-  "nodeModulesDir": "auto",
-  "imports": {
-    "node-windows": "npm:node-windows@^1.0.0-beta.8"
-  }
+  "nodeModulesDir": "auto"
 }
