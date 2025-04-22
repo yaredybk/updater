@@ -82,7 +82,7 @@ const svc2 = new Service({
   // scriptOptions: '--allow-all --no-check --env-file',
   env: [
   ],
-  maxRetries: 1,
+  // maxRetries: 1,
   allowServiceLogon: true,
   // execPath,
   nodeOptions:[],

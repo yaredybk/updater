@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 
 const ROOT = path.resolve(process.env.ROOT || '../');
+console.log(new Date());
 
 async function pullFromOrigin(repos = []) {
   for (const repo of repos) {
@@ -39,4 +40,9 @@ const repos = ['garage_v5'];
 if (process.env.NODE_ENV !== 'development') {
   repos.push('proxy_local', 'print_server', 'updater');
 }
-await pullFromOrigin(repos);
+(
+  async () => {
+    await pullFromOrigin(repos);
+    console.log('**** Pulling from origin completed ****');
+  }
+)()
