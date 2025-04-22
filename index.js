@@ -9,7 +9,7 @@ async function pullFromOrigin(repos = []) {
   for (const repo of repos) {
     const repoPath = path.join(ROOT, repo);
     if (!existsSync(repoPath)) {
-      console.log(`skipped repo: ${repo}`);
+      console.log(`**** Skipped ${repo} ****`);
       continue;
     }
     console.log(`**** Pulling ${repo} ****`);
