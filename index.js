@@ -1,7 +1,6 @@
-// deno
-import { exec } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import * as path from 'node:path';
+const { exec } = require('node:child_process');
+const { existsSync } = require('node:fs');
+const path = require('node:path');
 
 const ROOT = path.resolve(process.env.ROOT || '../');
 console.log(new Date());
@@ -20,9 +19,6 @@ async function pullFromOrigin(repos = []) {
           if (error) {
             console.error(`Error pulling ${repo}: ${error.message}`);
           } 
-          // else if (stderr) {
-          //   console.error(`Error pulling ${repo}: ${stderr}`);
-          // }
           console.log(`STDOUT ${repo}: ${stdout}`);
           resolve(stdout);
         });
@@ -44,5 +40,6 @@ if (process.env.NODE_ENV !== 'development') {
   async () => {
     await pullFromOrigin(repos);
     console.log('**** Pulling from origin completed ****');
+    process.exit();
   }
 )()
