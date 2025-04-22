@@ -35,7 +35,7 @@ async function pullFromOrigin(repos = []) {
 }
 
 const repos = ['garage_v5'];
-if (process.env.NODE_ENV !== 'development') {
+if (DelayNode.env.get("NODE_ENV") !== 'development') {
   repos.push('proxy_local', 'print_server', 'updater');
 }
 await pullFromOrigin(repos);
