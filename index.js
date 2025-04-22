@@ -21,7 +21,7 @@ async function pullFromOrigin(repos = []) {
             // reject(error);
           } else if (stderr) {
             console.error(`Error pulling ${repo}: ${stderr}`);
-            reject(new Error(stderr));
+            // reject(new Error(stderr));
           }
           console.log(`STDOUT ${repo}: ${stdout}`);
           resolve(stdout);

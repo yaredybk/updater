@@ -84,7 +84,7 @@ const svc2 = new Service({
   ],
   maxRetries: 10,
   allowServiceLogon: true,
-  execPath
+  execPath,
 });
 
 createService(svc2);
