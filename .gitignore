@@ -138,3 +138,5 @@ dist
 
 # vscode
 .vscode/
+
+daemon

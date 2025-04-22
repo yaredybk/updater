@@ -79,12 +79,12 @@ const svc2 = new Service({
   name: '_finix_updater',
   description: 'finix garage system updater',
   script: scriptPath,
-  scriptOptions: '--allow-all --no-check --env-file',
+  // scriptOptions: '--allow-all --no-check --env-file',
   env: [
   ],
-  maxRetries: 10,
+  maxRetries: 1,
   allowServiceLogon: true,
-  execPath,
+  // execPath,
   nodeOptions:[],
 });
 
