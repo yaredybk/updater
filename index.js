@@ -8,8 +8,11 @@ const ROOT = path.resolve(process.env.ROOT || '../');
 async function pullFromOrigin(repos = []) {
   for (const repo of repos) {
     const repoPath = path.join(ROOT, repo);
-    if (!existsSync(repoPath)) return console.log(`skipped repo: ${repo}`);
-    console.log(`Pulling ${repo}...`);
+    if (!existsSync(repoPath)) {
+      console.log(`skipped repo: ${repo}`);
+      continue;
+    }
+    console.log(`**** Pulling ${repo} ****`);
     try {
       await new Promise((resolve, reject) => {
         exec('git pull --force', { cwd: repoPath }, (error, stdout, stderr) => {
@@ -35,7 +38,7 @@ async function pullFromOrigin(repos = []) {
 }
 
 const repos = ['garage_v5'];
-if (DelayNode.env.get("NODE_ENV") !== 'development') {
+if (DelayNode.env.get('NODE_ENV') !== 'development') {
   repos.push('proxy_local', 'print_server', 'updater');
 }
 await pullFromOrigin(repos);
