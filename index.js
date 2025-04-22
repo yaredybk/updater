@@ -18,14 +18,13 @@ async function pullFromOrigin(repos = []) {
         exec('git pull --force', { cwd: repoPath }, (error, stdout, stderr) => {
           if (error) {
             console.error(`Error pulling ${repo}: ${error.message}`);
-            reject(error);
+            // reject(error);
           } else if (stderr) {
             console.error(`Error pulling ${repo}: ${stderr}`);
             reject(new Error(stderr));
-          } else {
-            console.log(`Successfully pulled ${repo}: ${stdout}`);
-            resolve(stdout);
           }
+          console.log(`STDOUT ${repo}: ${stdout}`);
+          resolve(stdout);
         });
       });
     } catch (error) {
