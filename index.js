@@ -2,6 +2,7 @@ const { exec } = require("node:child_process");
 const { existsSync } = require("node:fs");
 const { createServer } = require("node:http");
 const path = require("node:path");
+const http = require("http");
 let updating = false;
 const ROOT = path.resolve(process.env.ROOT || "../");
 // console.log(new Date());
@@ -15,7 +16,7 @@ async function checkForUpdates() {
   if (updating) return Promise.resolve("Already updating");
   updating = true;
   let foundUpdate = false;
-  return pullFromOrigin(repos).then(() => {
+  return pullFromOrigin(repos).then(async () => {
     console.log("**** Pulling from origin completed ****");
     if (foundUpdate) {
       console.log("**** Found update ****");
@@ -48,6 +49,9 @@ async function checkForUpdates() {
         })
         .finally(() => {
           updating = false;
+          setTimeout(() => {
+            process.exit(0);
+          }, 2000);
         });
     } else {
       console.log("**** No updates found ****");
