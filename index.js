@@ -1,6 +1,5 @@
 const { exec } = require("node:child_process");
 const { existsSync } = require("node:fs");
-const { createServer } = require("node:http");
 const path = require("node:path");
 const http = require("http");
 let updating = false;
@@ -105,9 +104,9 @@ async function listnner(req, res, body) {
     case "/update":
       // fun = Promise.resolve("updating");
       checkForUpdates()
-        .then(() => {
+        .then((r) => {
           res.writeHead(200, "done");
-          res.end("done");
+          res.end(r);
         })
         .catch((error) => {
           console.error(error);
