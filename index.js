@@ -14,8 +14,8 @@ if (process.env.NODE_ENV !== "development") {
 async function checkForUpdates() {
   if (updating) return Promise.resolve("Already updating");
   updating = true;
-  let foundUpdate = false;
-  return pullFromOrigin(repos).then(async () => {
+  // let foundUpdate = false;
+  return pullFromOrigin(repos).then(async (foundUpdate) => {
     console.log("**** Pulling from origin completed ****");
     if (foundUpdate) {
       console.log("**** Found update ****");
@@ -121,6 +121,7 @@ async function listnner(req, res, body) {
 }
 
 async function pullFromOrigin(repos = []) {
+  let foundUpdate = false;
   for (const repo of repos) {
     const repoPath = path.join(ROOT, repo);
     if (!existsSync(repoPath)) {
@@ -153,6 +154,7 @@ async function pullFromOrigin(repos = []) {
       );
     }
   }
+  return foundUpdate;
 }
 
 setInterval(() => checkForUpdates(), 1000 * 3600 * 3); // every 3 hours
