@@ -23,7 +23,7 @@ async function checkForUpdates() {
         __from: "proxy_local",
       };
       let baseurl = process.env.LOCAL_URL || "http://127.0.0.1:10001";
-      let url = `${baseurl}/api/dev/update`;
+      let url = `${baseurl}/api/dev/restart`;
       return Promise.all([
         fetch(url, {
           method: "POST",
