@@ -10,7 +10,9 @@ const repos = ["garage_v5"];
 if (process.env.NODE_ENV !== "development") {
   repos.push("proxy_local", "print_server", "updater");
 }
-// checkForUpdates();
+setTimeout(() => {
+  checkForUpdates();
+}, 10000); // wait 10 seconds before starting the update process
 async function checkForUpdates() {
   if (updating) return Promise.resolve("Already updating");
   updating = true;
@@ -132,19 +134,54 @@ async function pullFromOrigin(repos = []) {
     try {
       await new Promise((resolve, reject) => {
         exec("git pull --force", { cwd: repoPath }, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Error pulling ${repo}: ${error.message}`);
-          }
-          console.log(`STDOUT ${repo}: ${stdout}`);
           if (
-            stdout.includes("Updating") &&
-            !stdout.includes("Already up to date") &&
-            !foundUpdate
+            error?.message?.includes("conflict") ||
+            stdout?.includes("conflict") ||
+            error?.message?.includes("Merge conflicts")
           ) {
-            foundUpdate = true;
-            console.log(`**** Found update in ${repo} ****`);
+            console.error(`**** Merge conflicts detected in ${repo} ****`);
+            console.error("Please resolve the conflicts manually.");
+            exec(
+              "git reset --hard HEAD~2",
+              {},
+              (reseterror, resetStdout, resetStderr) => {
+                if (reseterror) {
+                  console.error(
+                    `Error resetting ${repo}: ${reseterror.message}`
+                  );
+                }
+                console.log(`Reset ${repo} to previous commit.`);
+                exec(
+                  "git pull --force",
+                  {},
+                  (pullError, pullStdout, pullStderr) => {
+                    if (pullError) {
+                      console.error(
+                        `Error pulling ${repo} after reset: ${pullError.message}`
+                      );
+                    } else {
+                      console.log(`Pulled ${repo} after reset.`);
+                    }
+                    resolve(pullStdout);
+                  }
+                );
+              }
+            );
+          } else {
+            if (error) {
+              console.error(`Error pulling ${repo}: ${error.message}`);
+            }
+            console.log(`STDOUT ${repo}: ${stdout}`);
+            if (
+              stdout.includes("Updating") &&
+              !stdout.includes("Already up to date") &&
+              !foundUpdate
+            ) {
+              foundUpdate = true;
+              console.log(`**** Found update in ${repo} ****`);
+            }
+            resolve(stdout);
           }
-          resolve(stdout);
         });
       });
     } catch (error) {
