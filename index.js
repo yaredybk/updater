@@ -22,7 +22,7 @@ async function checkForUpdates() {
     if (foundUpdate) {
       console.log("**** Found update ****");
       let headers3 = {
-        __from: "proxy_local",
+        __from: "updater",
       };
       let baseurl = process.env.LOCAL_URL || "http://127.0.0.1:10001";
       let url = `${baseurl}/api/dev/restart`;
