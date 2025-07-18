@@ -17,7 +17,7 @@ async function checkForUpdates() {
   if (updating) return Promise.resolve("Already updating");
   updating = true;
   // let foundUpdate = false;
-  return pullFromOrigin(repos).then(async (foundUpdate) => {
+  return pullFromOrigin(repos).then(async ([foundUpdate, stdout]) => {
     console.log("**** Pulling from origin completed ****");
     if (foundUpdate) {
       console.log("**** Found update ****");
@@ -30,12 +30,12 @@ async function checkForUpdates() {
         fetch(url, {
           method: "POST",
           headers: headers3,
-          body: JSON.stringify({ update: true }),
+          body: JSON.stringify({ update: true , stdout}),
         }),
         fetch(`http://127.0.0.1:10002/api/dev/update`, {
           method: "POST",
           headers: headers3,
-          body: JSON.stringify({ update: true }),
+          body: JSON.stringify({ update: true , stdout}),
         }),
       ])
         .then((response) => {
@@ -50,9 +50,6 @@ async function checkForUpdates() {
         })
         .finally(() => {
           updating = false;
-          setTimeout(() => {
-            process.exit(0);
-          }, 2000);
         });
     } else {
       console.log("**** No updates found ****");
@@ -124,6 +121,7 @@ async function listnner(req, res, body) {
 
 async function pullFromOrigin(repos = []) {
   let foundUpdate = false;
+  const stdOut =[];
   for (const repo of repos) {
     const repoPath = path.join(ROOT, repo);
     if (!existsSync(repoPath)) {
@@ -174,12 +172,13 @@ async function pullFromOrigin(repos = []) {
             console.log(`STDOUT ${repo}: ${stdout}`);
             if (
               stdout.includes("Updating") &&
-              !stdout.includes("Already up to date") &&
+              // !stdout.includes("Already up to date") &&
               !foundUpdate
             ) {
               foundUpdate = true;
               console.log(`**** Found update in ${repo} ****`);
             }
+            stdOut.push(`STDOUT ${repo}: ${stdout}`);
             resolve(stdout);
           }
         });
@@ -191,7 +190,7 @@ async function pullFromOrigin(repos = []) {
       );
     }
   }
-  return foundUpdate;
+  return [foundUpdate, stdOut.join("\n")];
 }
 
 setInterval(() => checkForUpdates(), 1000 * 3600 * 3); // every 3 hours
