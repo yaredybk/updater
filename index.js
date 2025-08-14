@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== "development") {
 }
 setTimeout(() => {
   checkForUpdates();
-}, 10000); // wait 10 seconds before starting the update process
+}, 5000); // wait 5 seconds before starting the update process
 async function checkForUpdates() {
   if (updating) return Promise.resolve("Already updating");
   updating = true;
