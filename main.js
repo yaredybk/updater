@@ -130,11 +130,12 @@ async function listnner(req, res, body) {
     case "/gitcheckout":
       const branch = body.branch || url.searchParams.get("branch") || "";
       const repo = body.repo || url.searchParams.get("repo") || "";
+      const user = body.user || url.searchParams.get("user") || "";
       if (!branch || !repo) {
         res.writeHead(400, "repo and branch are required");
         return res.end("repo and branch are required");
       }
-      gitCheckout(repo, branch)
+      gitCheckout(repo, branch, user)
         .then((r) => {
           res.writeHead(200, "done");
           res.end(r);
@@ -145,6 +146,19 @@ async function listnner(req, res, body) {
           res.end(error?.message || error?.toString() || "failed");
         });
 
+      break;
+    case "/list":
+      const list = {};
+      for (const repo of repos) {
+        const repoPath = path.join(ROOT, repo);
+        if (existsSync(repoPath)) {
+          list[repo] = repoPath;
+        } else {
+          list[repo] = "not found";
+        }
+      }
+      res.writeHead(200, "done");
+      res.end(JSON.stringify(list, null, 2));
       break;
     default:
       res.writeHead(404, "not found");
@@ -242,12 +256,35 @@ async function pullFromOrigin(repos = []) {
   return [foundUpdate, stdOut.join("\n")];
 }
 
-async function gitCheckout(repo, branch) {
+async function gitCheckout(repo, branch, user) {
   const repoPath = path.join(ROOT, repo);
+  const sanitize = (str) => str.replace(/[^a-zA-Z0-9-_]/g, "");
+  repo = sanitize(repo);
+  branch = sanitize(branch);
   if (!existsSync(repoPath)) {
-    return Promise.reject(
-      new Error(`Repository path does not exist: ${repoPath}`)
-    );
+    if (user) {
+      // sanitize user and repo to prevent command injection
+      user = sanitize(user);
+      const remoteOrigin = `git@github.com:${user}/${repo}.git`;
+      return new Promise((resolve, reject) => {
+        exec(
+          `git clone ${remoteOrigin} ${repoPath}`,
+          { cwd: ROOT },
+          (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Error cloning ${repo}: ${error.message}`);
+              return reject(error);
+            }
+            console.log(`Cloned ${repo} from ${remoteOrigin}`);
+            resolve(stdout);
+          }
+        );
+      });
+    } else {
+      return Promise.reject(
+        new Error(`Repository path does not exist: ${repoPath}`)
+      );
+    }
   }
   await new Promise((resolve, reject) => {
     exec(`git fetch`, { cwd: repoPath }, (error, stdout, stderr) => {
