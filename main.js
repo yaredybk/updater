@@ -8,7 +8,7 @@ const ROOT = path.resolve(process.env.ROOT || "../");
 const { _localStorage } = require("../utils/localstorage.js");
 let autoUpdate = _localStorage.getItem("autoUpdate") || "true";
 
-if (autoUpdate == "true" || autoUpdate == "1" || autoUpdate != "false")
+if (autoUpdate == "true" || autoUpdate == "1" || autoUpdate == "enable")
   autoUpdate = true;
 else autoUpdate = false;
 
@@ -97,7 +97,6 @@ http
 
 async function listnner(req, res, body) {
   let url = new URL(req.url, "http://localhost");
-
   switch (url.pathname) {
     case "/restart_computer":
       fun = Promise.resolve("restarting computer");
@@ -128,7 +127,30 @@ async function listnner(req, res, body) {
       break;
     case "/autoupdate":
       return autoupdate(req, res, body, url);
+    case "/gitcheckout":
+      const branch = body.branch || url.searchParams.get("branch") || "";
+      const repo = body.repo || url.searchParams.get("repo") || "";
+      if (!branch || !repo) {
+        res.writeHead(400, "repo and branch are required");
+        return res.end("repo and branch are required");
+      }
+      gitCheckout(repo, branch)
+        .then((r) => {
+          res.writeHead(200, "done");
+          res.end(r);
+        })
+        .catch((error) => {
+          console.error(error);
+          res.writeHead(500, "failed");
+          res.end(error?.message || error?.toString() || "failed");
+        });
+
+      break;
     default:
+      res.writeHead(404, "not found");
+      res.end("not found");
+      console.error("not found", req.url);
+
       break;
   }
 }
@@ -218,6 +240,42 @@ async function pullFromOrigin(repos = []) {
     }
   }
   return [foundUpdate, stdOut.join("\n")];
+}
+
+async function gitCheckout(repo, branch) {
+  const repoPath = path.join(ROOT, repo);
+  if (!existsSync(repoPath)) {
+    return Promise.reject(
+      new Error(`Repository path does not exist: ${repoPath}`)
+    );
+  }
+  await new Promise((resolve, reject) => {
+    exec(`git fetch`, { cwd: repoPath }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error fetching ${repoPath}: ${error.message}`);
+        return reject(error);
+      }
+      console.log(`Fetched ${repoPath}`);
+      resolve(stdout);
+    });
+  });
+  return new Promise((resolve, reject) => {
+    exec(
+      `git checkout ${branch}`,
+      { cwd: repoPath },
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(
+            `Error checking out ${branch} in ${repoPath}: ${error.message}`
+          );
+          reject(error);
+        } else {
+          console.log(`Checked out to [${branch}] in [${repoPath}]`);
+          resolve(stdout);
+        }
+      }
+    );
+  });
 }
 
 if (autoUpdate) {
