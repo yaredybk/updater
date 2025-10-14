@@ -31,6 +31,7 @@ async function checkForUpdates() {
   // let foundUpdate = false;
   return pullFromOrigin(repos).then(async ([foundUpdate, stdout]) => {
     console.log("**** Pulling from origin completed ****");
+    console.log("STDOUT:", stdout);
     if (foundUpdate) {
       console.log("**** Found update ****");
       let headers3 = {
