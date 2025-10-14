@@ -38,6 +38,7 @@ async function checkForUpdates() {
       };
       let baseurl = process.env.LOCAL_URL || "http://127.0.0.1:10001";
       let url = `${baseurl}/api/dev/restart`;
+      const print_url = process.env.PRINT_URL || "http://localhost:" + 10003;
       return Promise.all([
         fetch(url, {
           method: "POST",
@@ -45,6 +46,11 @@ async function checkForUpdates() {
           body: JSON.stringify({ update: true, stdout }),
         }),
         fetch(`http://127.0.0.1:10002/api/dev/update`, {
+          method: "POST",
+          headers: headers3,
+          body: JSON.stringify({ update: true, stdout }),
+        }),
+        fetch(`${print_url}/restart`, {
           method: "POST",
           headers: headers3,
           body: JSON.stringify({ update: true, stdout }),
