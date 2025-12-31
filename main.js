@@ -108,6 +108,7 @@ http
 
 async function listnner(req, res, body) {
   let url = new URL(req.url, "http://localhost");
+  url = url.replaceAll(/.*\/updater/g, "/")
   switch (url.pathname) {
     case "/restart_computer":
       fun = Promise.resolve("restarting computer");
@@ -172,7 +173,7 @@ async function listnner(req, res, body) {
       res.end(JSON.stringify(list, null, 2));
       break;
     default:
-      res.writeHead(404, "not found");
+      res.writeHead(404, "not found : from updater");
       res.end("not found");
       console.error("not found", req.url);
 
