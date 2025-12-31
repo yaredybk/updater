@@ -1,3 +1,7 @@
+/**
+ * @deprecated please do not use
+ * @use index.js for entry
+ */
 const { exec } = require("node:child_process");
 const { existsSync } = require("node:fs");
 const path = require("node:path");
