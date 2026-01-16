@@ -35,7 +35,6 @@ async function checkForUpdates() {
   // let foundUpdate = false;
   return pullFromOrigin(repos).then(async ([foundUpdate, stdout]) => {
     console.log("**** Pulling from origin completed ****");
-    console.log("STDOUT:", stdout);
     let headers3 = {
       __from: "updater",
     };
@@ -55,12 +54,11 @@ async function checkForUpdates() {
       // #fix-me : the updater always gets this log "STDOUT updater: Updating b667840..a14bf0f"
       // "updater": `http://127.0.0.1:${process.env.UPDATE_PORT || 10004}/update`,
     };
-    if (foundUpdate) {
+    foundUpdate = foundUpdate.filter((repo) => fetchPayload[repo]);
+    if (foundUpdate.length > 0) {
       console.log("**** Found update ****");
       return Promise.all([
-        foundUpdate.map((repo_) =>
-          fetchPayload[repo_] ? fetch(fetchPayload[repo_], reqInit) : null
-        ),
+        foundUpdate.map((repo_) => fetch(fetchPayload[repo_], reqInit)),
       ])
         .then((response) => {
           if (response[0].ok) {
