@@ -36,30 +36,31 @@ async function checkForUpdates() {
   return pullFromOrigin(repos).then(async ([foundUpdate, stdout]) => {
     console.log("**** Pulling from origin completed ****");
     console.log("STDOUT:", stdout);
+    let headers3 = {
+      __from: "updater",
+    };
+    let baseurl = process.env.LOCAL_URL || "http://127.0.0.1:10001";
+    let url = `${baseurl}/api/dev/restart`;
+    const print_url = process.env.PRINT_URL || "http://localhost:" + 10003;
+    const reqInit = {
+      method: "POST",
+      headers: headers3,
+      body: JSON.stringify({ update: true, stdout }),
+    };
+    const fetchPayload = {
+      garage_v5: url,
+      proxy_local: `http://127.0.0.1:10002/api/dev/update`,
+
+      print_server: `${print_url}/restart`,
+      // #fix-me : the updater always gets this log "STDOUT updater: Updating b667840..a14bf0f"
+      // "updater": `http://127.0.0.1:${process.env.UPDATE_PORT || 10004}/update`,
+    };
     if (foundUpdate) {
       console.log("**** Found update ****");
-      let headers3 = {
-        __from: "updater",
-      };
-      let baseurl = process.env.LOCAL_URL || "http://127.0.0.1:10001";
-      let url = `${baseurl}/api/dev/restart`;
-      const print_url = process.env.PRINT_URL || "http://localhost:" + 10003;
       return Promise.all([
-        fetch(url, {
-          method: "POST",
-          headers: headers3,
-          body: JSON.stringify({ update: true, stdout }),
-        }),
-        fetch(`http://127.0.0.1:10002/api/dev/update`, {
-          method: "POST",
-          headers: headers3,
-          body: JSON.stringify({ update: true, stdout }),
-        }),
-        fetch(`${print_url}/restart`, {
-          method: "POST",
-          headers: headers3,
-          body: JSON.stringify({ update: true, stdout }),
-        }),
+        foundUpdate.map((repo_) =>
+          fetchPayload[repo_] ? fetch(fetchPayload[repo_], reqInit) : null
+        ),
       ])
         .then((response) => {
           if (response[0].ok) {
@@ -108,7 +109,7 @@ http
 
 async function listnner(req, res, body) {
   let url = new URL(req.url, "http://localhost");
-  url = url.replaceAll(/.*\/updater/g, "/")
+  url = url.replaceAll(/.*\/updater/g, "/");
   switch (url.pathname) {
     case "/restart_computer":
       fun = Promise.resolve("restarting computer");
@@ -194,8 +195,13 @@ async function autoupdate(req, res, body, url) {
   }
 }
 
+/**
+ *
+ * @param {Array<string>} repos
+ * @returns {[Array<string>, string]}
+ */
 async function pullFromOrigin(repos = []) {
-  let foundUpdate = false;
+  let foundUpdate = [];
   const stdOut = [];
   for (const repo of repos) {
     const repoPath = path.join(ROOT, repo);
@@ -245,12 +251,8 @@ async function pullFromOrigin(repos = []) {
               console.error(`Error pulling ${repo}: ${error.message}`);
             }
             console.log(`STDOUT ${repo}: ${stdout}`);
-            if (
-              stdout.includes("Updating") &&
-              // !stdout.includes("Already up to date") &&
-              !foundUpdate
-            ) {
-              foundUpdate = true;
+            if (stdout.includes("Updating")) {
+              foundUpdate.push(repo);
               console.log(`**** Found update in ${repo} ****`);
             }
             stdOut.push(`STDOUT ${repo}: ${stdout}`);
