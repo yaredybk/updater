@@ -101,14 +101,14 @@ http
   .listen(process.env.UPDATE_PORT || 10004, () => {
     console.log(
       "update server running at http://localhost:" +
-        (process.env.UPDATE_PORT || 10004)
+        (process.env.UPDATE_PORT || 10004),
     );
   });
 
 async function listnner(req, res, body) {
   let url = new URL(req.url, "http://localhost");
-  url = url.replaceAll(/.*\/updater/g, "/");
-  switch (url.pathname) {
+  const route = url.pathname.replaceAll(/.*\/updater/g, "/");
+  switch (route) {
     case "/restart_computer":
       fun = Promise.resolve("restarting computer");
       exec(
@@ -120,7 +120,7 @@ async function listnner(req, res, body) {
           }
           console.log(`stdout: ${stdout}`);
           console.error(`stderr: ${stderr}`);
-        }
+        },
       );
       break;
     case "/update":
@@ -171,6 +171,10 @@ async function listnner(req, res, body) {
       res.writeHead(200, "done");
       res.end(JSON.stringify(list, null, 2));
       break;
+    case "/git":
+      handleGit(req, res, body, url);
+      break;
+
     default:
       res.writeHead(404, "not found : from updater");
       res.end("not found");
@@ -224,7 +228,7 @@ async function pullFromOrigin(repos = []) {
               (reseterror, resetStdout, resetStderr) => {
                 if (reseterror) {
                   console.error(
-                    `Error resetting ${repo}: ${reseterror.message}`
+                    `Error resetting ${repo}: ${reseterror.message}`,
                   );
                 }
                 console.log(`Reset ${repo} to previous commit.`);
@@ -234,15 +238,15 @@ async function pullFromOrigin(repos = []) {
                   (pullError, pullStdout, pullStderr) => {
                     if (pullError) {
                       console.error(
-                        `Error pulling ${repo} after reset: ${pullError.message}`
+                        `Error pulling ${repo} after reset: ${pullError.message}`,
                       );
                     } else {
                       console.log(`Pulled ${repo} after reset.`);
                     }
                     resolve(pullStdout);
-                  }
+                  },
                 );
-              }
+              },
             );
           } else {
             if (error) {
@@ -261,7 +265,7 @@ async function pullFromOrigin(repos = []) {
     } catch (error) {
       console.error(error);
       console.error(
-        `Failed to pull ${repo}. Please check the repository manually.`
+        `Failed to pull ${repo}. Please check the repository manually.`,
       );
     }
   }
@@ -269,9 +273,9 @@ async function pullFromOrigin(repos = []) {
 }
 
 async function gitCheckout(repo, branch, user) {
-  const repoPath = path.join(ROOT, repo);
   const sanitize = (str) => str.replace(/[^a-zA-Z0-9-_]/g, "");
   repo = sanitize(repo);
+  const repoPath = path.join(ROOT, repo);
   branch = sanitize(branch);
   if (!existsSync(repoPath)) {
     if (user) {
@@ -289,12 +293,12 @@ async function gitCheckout(repo, branch, user) {
             }
             console.log(`Cloned ${repo} from ${remoteOrigin}`);
             resolve(stdout);
-          }
+          },
         );
       });
     } else {
       return Promise.reject(
-        new Error(`Repository path does not exist: ${repoPath}`)
+        new Error(`Repository path does not exist: ${repoPath}`),
       );
     }
   }
@@ -315,14 +319,14 @@ async function gitCheckout(repo, branch, user) {
       (error, stdout, stderr) => {
         if (error) {
           console.error(
-            `Error checking out ${branch} in ${repoPath}: ${error.message}`
+            `Error checking out ${branch} in ${repoPath}: ${error.message}`,
           );
           reject(error);
         } else {
           console.log(`Checked out to [${branch}] in [${repoPath}]`);
           resolve(stdout);
         }
-      }
+      },
     );
   });
 }
@@ -330,3 +334,33 @@ async function gitCheckout(repo, branch, user) {
 if (autoUpdate) {
   setInterval(() => checkForUpdates(), 1000 * 3600 * 3); // every 3 hours
 }
+
+function handleGit(req, res, body, url) {
+  const method = req.method;
+  const headers = req.headers;
+  const query = url.searchParams;
+  const command = "git " + query.get("command").replace(/^git /, "");
+  const sanitize = (str) => str.replace(/[^a-zA-Z0-9-_]/g, "");
+  const repo = sanitize(query.get("repo") || body.repo || "");
+  // const branch = query.get("branch");
+  // const user = query.get("user");
+  // repo = sanitize(repo);
+  const repoPath = path.join(ROOT, repo);
+  if (!existsSync(repoPath)) {
+    // send repo not found and use /gitcheckout to create it
+    res.writeHead(404, "repo not found");
+    return res.end("repo not found, use /gitcheckout to create it");
+  }
+  exec(command, { cwd: repoPath }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing ${command} in ${repoPath}: ${error.message}`);
+      res.writeHead(500, "failed");
+      res.end(error.message);
+    } else {
+      console.log(`Executed ${command} in ${repoPath}`);
+      res.writeHead(200, "done");
+      res.end(stdout || stderr);
+    }
+  });
+}
+
